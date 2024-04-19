@@ -1,0 +1,7 @@
+node_modules
+
+# All generated files
+generated
+
+# Personal env values
+.env
