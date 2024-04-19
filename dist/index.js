@@ -9,10 +9,10 @@ const csv_writer_1 = require("csv-writer");
 const dayjs_1 = __importDefault(require("dayjs"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-// Main execution logic
 const channelId = process.env.SLACK_CHANNEL_ID;
 const token = process.env.SLACK_TOKEN;
 const myUserId = process.env.MY_USER_ID;
+// Main execution logic
 main(channelId, token)
     .then(async (messages) => {
     console.log(`🚀 ~ Found ${messages.length} messages in channel`);
@@ -23,17 +23,19 @@ main(channelId, token)
         if (summary) {
             fs_1.default.writeFile('generated/monthly-summary.txt', summary, err => {
                 if (err) {
-                    console.error('Failed to write summary to file:', err);
+                    console.error('Failed to write summary to file:', err.message);
                 }
                 else {
                     console.log('Monthly summary saved successfully.');
                 }
             });
         }
+    }).catch(err => {
+        console.error('Failed fetch ChatGPT summary ~ ', err.message);
     });
 })
     .catch(error => {
-    console.error("Error:", error.message);
+    console.error("Error while fetching remote messages ~ ", error.message);
 });
 async function main(channelId, token, startDate, endDate) {
     console.log(`🚀 ~ Start fetching messages from slack channel #${channelId}`);
@@ -96,9 +98,14 @@ async function writeDataToCSV(messagesByDate) {
     await csvWriter.writeRecords(records);
     console.log("🚀 ~  The CSV file was written successfully into #generated/slack-messages.csv");
 }
+/**
+ * ! Still failing
+ * @param messagesByDate organized messages
+ * @returns summary
+ */
 async function fetchChatGPTSummary(messagesByDate) {
     const apiKey = process.env.OPENAI_API_KEY;
-    const endpoint = "https://api.openai.com/v1/engines/text-davinci-002/completions";
+    const endpoint = "https://api.openai.com/v1/chat/completions";
     const headers = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
@@ -107,14 +114,8 @@ async function fetchChatGPTSummary(messagesByDate) {
         prompt: generatePrompt(messagesByDate),
         max_tokens: 1024
     };
-    try {
-        const response = await axios_1.default.post(endpoint, data, { headers });
-        return response.data.choices[0].text;
-    }
-    catch (error) {
-        console.error('Error calling the OpenAI API:', error);
-        return null;
-    }
+    const response = await axios_1.default.post(endpoint, data, { headers });
+    return response.data.choices[0].text;
 }
 function generatePrompt(messagesByDate) {
     const prompt = Object.entries(messagesByDate).reduce((acc, [date, messages]) => {

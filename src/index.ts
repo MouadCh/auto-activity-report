@@ -4,6 +4,7 @@ import { createObjectCsvWriter } from 'csv-writer';
 import dayjs from 'dayjs';
 import dotenv from 'dotenv';
 import { Message, MessagesByDate } from './interfaces/message.interface';
+
 dotenv.config();
 
 
@@ -115,9 +116,14 @@ async function writeDataToCSV(messagesByDate: MessagesByDate): Promise<void> {
     console.log("🚀 ~  The CSV file was written successfully into #generated/slack-messages.csv");
 }
 
+/**
+ * ! Still failing 
+ * @param messagesByDate organized messages
+ * @returns summary
+ */
 async function fetchChatGPTSummary(messagesByDate: MessagesByDate): Promise<string | null> {
     const apiKey = process.env.OPENAI_API_KEY!;
-    const endpoint = "https://api.openai.com/v1/engines/text-davinci-002/completions";
+    const endpoint = "https://api.openai.com/v1/chat/completions";
 
     const headers = {
         'Content-Type': 'application/json',
